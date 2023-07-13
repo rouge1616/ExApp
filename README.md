@@ -35,7 +35,7 @@ If you use this code or data for your research please cite this paper.
 author = {Haouchine, Nazim and Dorent, Reuben and Juvekar, Parikshit and Torio, Erikcson and Wells III, William and Kapur, Tina and Golby, Alexandra and Frisken, Sarah},
 year = {2023},
 month = {-},
-journal={MICCAI 2023},
+journal={International Conference on Medical Image Computing and Computer-Assisted Intervention. MICCAI 2023},
 pages = {-},
 title = {Learning Expected Appearances for Intraoperative Registration: Application to Neurosurgical Guidance},
 volume = {-},

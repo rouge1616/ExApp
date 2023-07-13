@@ -4,7 +4,10 @@ Learning Expected Appearances for Intraoperative Registration
 This repository contains the python source code for the paper: 
 Learning Expected Appearances for Intraoperative Registration: Application to Neurosurgical Guidance. To appear in MICCAI 2023.
 
+
 ![Expected Appearnaces](https://github.com/rouge1616/ExApp/blob/main/ExApp.jpg)
+
+
 
 ## Dataset
 Synthesized images and 3D poses can be downloaded here: [Google Drive Dataset](https://drive.google.com/drive/folders/1T2NS_BftaxE6yYZj3I1LdspuqNKwSyCl?usp=sharing) 

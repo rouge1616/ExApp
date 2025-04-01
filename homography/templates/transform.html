@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transform Image</title>
+    <style>
+        img {
+            cursor: crosshair;
+            position: relative;
+        }
+        .dot {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: red;
+            border-radius: 50%;
+            pointer-events: none; /* Prevents the dot from interfering with clicks */
+        }
+    </style>
+</head>
+<body>
+    <h1>Select Corners of the Image</h1>
+    <div style="position: relative;">
+        <img id="image" src="{{ url_for('uploaded_file', filename=filename) }}" alt="Uploaded Image" width="600" data-original-width="{{ width }}" data-original-height="{{ height }}">
+    </div>
+    <form id="coordsForm" action="/transform" method="post">
+        <input type="hidden" name="filename" value="{{ filename }}">
+        <input type="hidden" name="coords[]" id="coordsInput">
+        <input type="submit" value="Transform">
+    </form>
+
+    <script>
+        const coords = [];
+        const image = document.getElementById('image');
+        const container = image.parentElement;
+
+        const originalWidth = parseInt(image.getAttribute('data-original-width'));
+        const originalHeight = parseInt(image.getAttribute('data-original-height'));
+
+        image.addEventListener('click', function(event) {
+            const rect = image.getBoundingClientRect();
+            const x = Math.round((event.clientX - rect.left) * (originalWidth / image.width));
+            const y = Math.round((event.clientY - rect.top) * (originalHeight / image.height));
+            coords.push([x, y]); // Store as an array of arrays
+
+            // Create a red dot at the clicked position
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+            dot.style.left = `${event.clientX - rect.left - 5}px`; // Center the dot
+            dot.style.top = `${event.clientY - rect.top - 5}px`; // Center the dot
+            container.appendChild(dot);
+
+            if (coords.length === 4) {
+                document.getElementById('coordsInput').value = JSON.stringify(coords); // Convert to JSON string
+            }
+        });
+    </script>
+</body>
+</html>

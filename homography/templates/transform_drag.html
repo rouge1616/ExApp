@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transform Image</title>
+    <style>
+        #container {
+            position: relative;
+            display: inline-block;
+        }
+        #image {
+            cursor: crosshair;
+            display: block;
+        }
+        .dot {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            background-color: red;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none; /* So clicks go through the canvas */
+        }
+    </style>
+</head>
+<body>
+    <h1>Select Corners of the Image</h1>
+    <div id="container">
+        <img id="image" src="{{ url_for('uploaded_file', filename=filename) }}" 
+             alt="Uploaded Image" width="600" 
+             data-original-width="{{ width }}" data-original-height="{{ height }}">
+        <canvas id="canvas"></canvas>
+    </div>
+    <form id="coordsForm" action="/transform" method="post">
+        <input type="hidden" name="filename" value="{{ filename }}">
+        <input type="hidden" name="coords[]" id="coordsInput">
+        <input type="submit" value="Transform">
+    </form>
+
+    <script>
+        const image = document.getElementById('image');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const container = document.getElementById('container');
+
+        const originalWidth = parseInt(image.getAttribute('data-original-width'));
+        const originalHeight = parseInt(image.getAttribute('data-original-height'));
+
+        const coords = [];
+        const dots = [];
+
+        function updateCanvasSize() {
+            canvas.width = image.width;
+            canvas.height = image.height;
+        }
+
+        function drawLines() {
+            updateCanvasSize();
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (coords.length >= 2) {
+                ctx.beginPath();
+                ctx.strokeStyle = 'green';
+                ctx.lineWidth = 2;
+
+                coords.forEach((coord, i) => {
+                    const [x, y] = coord;
+                    const scaledX = x * (image.width / originalWidth);
+                    const scaledY = y * (image.height / originalHeight);
+                    if (i === 0) {
+                        ctx.moveTo(scaledX, scaledY);
+                    } else {
+                        ctx.lineTo(scaledX, scaledY);
+                    }
+                });
+
+                if (coords.length === 4) {
+                    const [x0, y0] = coords[0];
+                    ctx.lineTo(x0 * (image.width / originalWidth), y0 * (image.height / originalHeight));
+                }
+
+                ctx.stroke();
+            }
+        }
+
+        function createDraggableDot(x, y, index) {
+            const dot = document.createElement('div');
+            dot.className = 'dot';
+
+            const scaledX = x * (image.width / originalWidth);
+            const scaledY = y * (image.height / originalHeight);
+            dot.style.left = `${scaledX - 5}px`;
+            dot.style.top = `${scaledY - 5}px`;
+
+            dot.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                const onMouseMove = (moveEvent) => {
+                    const rect = image.getBoundingClientRect();
+                    const newX = moveEvent.clientX - rect.left;
+                    const newY = moveEvent.clientY - rect.top;
+
+                    const boundedX = Math.max(0, Math.min(image.width, newX));
+                    const boundedY = Math.max(0, Math.min(image.height, newY));
+
+                    dot.style.left = `${boundedX - 5}px`;
+                    dot.style.top = `${boundedY - 5}px`;
+
+                    // Update coords based on scaled position
+                    coords[index] = [
+                        Math.round(boundedX * (originalWidth / image.width)),
+                        Math.round(boundedY * (originalHeight / image.height))
+                    ];
+
+                    drawLines();
+                };
+
+                const onMouseUp = () => {
+                    document.removeEventListener('mousemove', onMouseMove);
+                    document.removeEventListener('mouseup', onMouseUp);
+                    document.getElementById('coordsInput').value = JSON.stringify(coords);
+                };
+
+                document.addEventListener('mousemove', onMouseMove);
+                document.addEventListener('mouseup', onMouseUp);
+            });
+
+            container.appendChild(dot);
+            dots.push(dot);
+        }
+
+        image.addEventListener('click', function (event) {
+            if (coords.length >= 4) return;
+
+            const rect = image.getBoundingClientRect();
+            const clickX = event.clientX - rect.left;
+            const clickY = event.clientY - rect.top;
+
+            const scaledX = Math.round(clickX * (originalWidth / image.width));
+            const scaledY = Math.round(clickY * (originalHeight / image.height));
+            coords.push([scaledX, scaledY]);
+
+            createDraggableDot(scaledX, scaledY, coords.length - 1);
+            drawLines();
+
+            if (coords.length === 4) {
+                document.getElementById('coordsInput').value = JSON.stringify(coords);
+            }
+        });
+
+        window.addEventListener('resize', () => {
+            drawLines();
+            // Also reposition dots
+            dots.forEach((dot, i) => {
+                const [x, y] = coords[i];
+                const scaledX = x * (image.width / originalWidth);
+                const scaledY = y * (image.height / originalHeight);
+                dot.style.left = `${scaledX - 5}px`;
+                dot.style.top = `${scaledY - 5}px`;
+            });
+        });
+
+        // Initial canvas size setup
+        window.onload = updateCanvasSize;
+    </script>
+</body>
+</html>
